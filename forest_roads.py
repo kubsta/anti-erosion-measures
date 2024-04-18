@@ -37,7 +37,6 @@ import math
 
 
 
-
 class IsoTreelinesAlgo(QgsProcessingAlgorithm):
  
     def name(self):
@@ -77,7 +76,7 @@ class IsoTreelinesAlgo(QgsProcessingAlgorithm):
 
         self.addParameter(
             QgsProcessingParameterFolderDestination(
-                'mainfolder', 'Choose folder with scripts and outputdata destination',defaultValue=os.path.join('C:\\', 'Users', 'jakub', 'AppData', 'Roaming', 'QGIS', 'QGIS3', 'profiles', 'default', 'processing', 'scripts', 'anti-erosion-measures'), 
+                'mainfolder', 'Choose folder with scripts and outputdata destination',defaultValue=os.path.join('C:\\', 'Users', 'Kuba', 'AppData', 'Roaming', 'QGIS', 'QGIS3', 'profiles', 'default', 'processing', 'scripts', 'anti-erosion-measures'), 
             )
             
         )
@@ -154,15 +153,18 @@ class IsoTreelinesAlgo(QgsProcessingAlgorithm):
                 rows = len(gdf)
                 segment_slope = np.array([])
                 
-
-
+                elev = gdf['ELEV_1'].to_numpy()
+                distance = gdf['distance'].to_numpy()
+                dx_distances = np.diff(distance)  # 1m
+                dz_elevs = np.diff(elev)  # elevation difference between points i and i-1
+                dd3_distances = np.sqrt(dx_distances**2 + dz_elevs**2)  # 3D distance between points i and i-1
                 
                 # loop over the rows
                 for i in range(1,rows):
-                    dx_distance = gdf.at[i, 'distance']-gdf.at[i-1, 'distance']  # 1m
-                    dz_elev = gdf.at[i, 'ELEV_1']- gdf.at[i-1, 'ELEV_1'] # elevation difference between points i and i-1
-                    dd3_distance = math.sqrt(dx_distance**2 + dz_elev**2) # 3D distance between points i and i-1
-                    d3_distance = d3_distance + dd3_distance  # add the 3D distance to the total 3d distance
+                    dx_distance = dx_distances[i-1]  # 1m
+                    dz_elev = dz_elevs[i-1]# elevation difference between points i and i-1
+                    dd3_distance = dd3_distances[i-1] # 3D distance between points i and i-1
+                    d3_distance = d3_distance + dd3_distance # add the 3D distance to the total 3d distance
 
                     dslope = dz_elev/dx_distance  # slope between points i and i-1 
                     segment_slope = np.append(segment_slope,dslope)  # add the slope to the array
